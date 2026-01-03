@@ -1,0 +1,161 @@
+require "building"
+require "player"
+require "helicopter"
+require "carManager"
+require "rocket"
+
+function love.load()
+    helicopter_arr = {}
+    Object = require "classic"
+
+    screen_width = love.graphics.getWidth()
+    screen_height = love.graphics.getHeight()
+
+    love.physics.setMeter(64) --the height of a meter our worlds will be 64px
+    world = love.physics.newWorld(0, 9.81*64, true) 
+    local road = {}
+    road.body = love.physics.newBody(world, 5, 780 , "static")
+    road.shape = love.physics.newRectangleShape(5, 5, screen_width+10000, screen_height-5)
+    road.fixture = love.physics.newFixture(road.body, road.shape, 1)  
+    x=300
+    y=450
+    carManager = CarManager()
+    player = Player(100,y-64)
+    buildings = {}
+    building1 = Building(x,y,5,3)
+    helicopter = Helicopter(150,100,0,300)
+
+    building2 = Building(x+600,y,3,5)
+
+    building3 = Building(x+1200,y,6,4)
+    buildings[0] = building1
+    buildings[1] = building2
+    buildings[2] = building3    
+    buidling_count = 3
+
+
+    rocket = Rocket(50,125)
+
+    heli_count = 0
+    helicopter_arr[0] = helicopter
+    background = love.graphics.newImage("graphics/background.png")   
+    background:setFilter("nearest", "nearest")
+
+end
+
+function love.draw()
+    love.graphics.draw(background,0,0)
+    for i = 0,buidling_count-1 do
+        building = buildings[i]
+        building:draw()
+    end
+    rocket:draw()
+    player:draw()
+    helicopter:draw()
+    carManager:drawCars()
+    
+    
+end
+
+function love.update(dt)
+    world:update(dt)
+    carManager:updateCars(dt)
+    player:update(dt)
+    for h= 0,heli_count do
+        helicopter:update(dt)
+    end
+    local building_touching = nil
+    for i = 0,buidling_count-1 do
+        building = buildings[i]
+        if building:isColliding(player.x-32,player.y,"down") then
+            building_touching = building
+        end
+    end
+
+
+    if love.keyboard.isDown("up") then
+        for i = 0,buidling_count-1 do
+            building = buildings[i]
+            if building:isColliding(player.x,player.y,"up") then
+                player:move("up",building_touching)
+            end
+        end
+        
+    end
+    
+    if (helicopter:isColliding(player.x,player.y)) then
+    end
+
+    if love.keyboard.isDown("down") then
+        for i = 0,buidling_count-1 do
+            building = buildings[i]
+            if building:isColliding(player.x,player.y,"down") then
+                player:move("down",building_touching)
+            end
+        end
+    end
+
+    if love.keyboard.isDown("rshift") then
+        pushRadial(world, player.x, player.y+64, 100, 100)
+        -- pushRadial(world, player.x, player.y+64, -50, 00)
+    end
+
+
+    if love.keyboard.isDown("left") then
+        player:move("left",building_touching)
+    end
+    if love.keyboard.isDown("right") then
+        player:move("right",building_touching)
+    end
+    if love.keyboard.isDown("space") then
+        if (player.attacking == false) then
+            player:attack()
+            if player.direction == "right" then
+                for i = 0,buidling_count-1 do
+                    building = buildings[i]
+                    building:hitWindow(player.x+64,player.y+128)
+                end
+            else 
+                for i = 0,buidling_count-1 do
+                    building = buildings[i]
+                    building:hitWindow(player.x-64,player.y+128)
+                end
+            end
+        end
+    end
+end
+
+function love.keyreleased(key)
+    if (key == "space") then
+        player:resetState()
+    end
+    if (key == "lshift") then
+        carManager:isColliding(player.x,player.y) 
+    end
+
+end
+
+
+function pushRadial(world, cx, cy, radius, strength)
+  -- Broad-phase: get fixtures in a bounding box (fast)
+  world:queryBoundingBox(cx - radius, cy - radius, cx + radius, cy + radius, function(fixture)
+    local body = fixture:getBody()
+    if body:getType() ~= "dynamic" then return true end
+
+    local bx, by = body:getWorldCenter()
+    local dx, dy = bx - cx, by - cy
+    local dist2 = dx*dx + dy*dy
+    if dist2 == 0 or dist2 > radius*radius then return true end
+
+    local dist = math.sqrt(dist2)
+    local nx, ny = dx / dist, dy / dist
+
+    -- falloff: stronger near center, weaker at edge
+    local t = 1 - (dist / radius)
+    local impulse = strength * t
+
+    body:applyLinearImpulse(nx * impulse, ny * impulse)
+
+    return true -- keep searching
+  end)
+end
