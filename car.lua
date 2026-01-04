@@ -1,6 +1,6 @@
 Object = require "classic"
 Car = Object:extend()
-
+local CAT_CAR = 0x0001 
 
 function Car:new(x,y)
 	self.image = love.graphics.newImage("graphics/car.png")
@@ -11,13 +11,14 @@ function Car:new(x,y)
 	self.y = y
 	self.speed = 50
 	self.direction = "right" --right or left
-	self.state = "driving" -- driving, flying, exploding, exploded
-	self.ball = {}
+	self.state = "driving" -- driving, flying, exploding, exploded, held
+	self.box = {}
 	self.radians = 0
-    self.ball.body = love.physics.newBody(world, 200,500 , "static")
-    self.ball.shape = love.physics.newRectangleShape(0, 0, 50, 100)
-    self.ball.fixture = love.physics.newFixture(self.ball.body, self.ball.shape, 5)    
-    self.ball.fixture:setFilterData(1, 0, 0)
+    self.box.body = love.physics.newBody(world, 200,500 , "static")
+    self.box.shape = love.physics.newRectangleShape(0, 0, 50, 25)
+    self.box.fixture = love.physics.newFixture(self.box.body, self.box.shape, 5)    
+    self.box.fixture:setFilterData(1, 0, 0)
+    self.falling = false
     self.explodeFrame = 1
 	self.framesBetween = 10
 	self.framesUntilLoop = 0
@@ -52,6 +53,7 @@ function Car:draw()
 		quad = love.graphics.newQuad(32*6,0,32,16,224,16)
 		love.graphics.draw(self.exploding, quad, self.x, self.y,0,2.5,2.5)
 	end
+	love.graphics.polygon("line", self.box.body:getWorldPoints(self.box.shape:getPoints()))
 end
 
 function Car:hit()
@@ -59,15 +61,20 @@ function Car:hit()
 		return
 	end
 	self.state = "flying"
-    self.ball.body:setType("dynamic")
-    self.ball.body:applyLinearImpulse(1000,-3000)
+    self.box.body:setType("dynamic")
+    self.box.body:applyLinearImpulse(300,-750)
+end
+
+function Car:held()
+	self.state = "held"
 end
 
 function Car:update(dt)
+
 	if self.state == "driving" then
 		if (self.direction == "right") then
 			self.x = self.x + self.speed * dt
-			self.ball.body:setX(self.x)
+			self.box.body:setX(self.x)
 		end
 		if (self.direction == "left") then
 			self.x = self.x - self.speed * dt
@@ -75,12 +82,14 @@ function Car:update(dt)
 	end
 
 	if (self.state == "flying") then
-		print(self.ball.body:getType())
-		self.x = self.ball.body:getX()
-		self.y = self.ball.body:getY()
+		local falling = self.y - self.box.body:getY() 
+		self.x = self.box.body:getX()
+		self.y = self.box.body:getY()
 		self.radians = self.radians + .1
-		if (self.y >= 500) then
-			self.ball.body:setType("static")
+		-- this was checking the y value. id like to use isTouching
+		if (falling == 0) then
+			self.box.body:setType("static")
+			self.box.body:setMass(100)
 			self.state = "exploding"
 		end
 	end

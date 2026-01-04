@@ -6,7 +6,7 @@ function CarManager:new()
 	self.off_screen = love.graphics.getWidth() + 50
 	self.respawnTime = 1 --milliseconds?
 	self.timer = self.respawnTime
-	self.startCars = 100 - 1
+	self.startCars = 0
 	self.totalCars = 0
 	self.cars = {}
 	for i = 0,self.startCars do 
@@ -16,14 +16,13 @@ function CarManager:new()
 	print("Total cars : " .. self.totalCars)
 end
 
-function CarManager:isColliding(player_x,player_y)
+function CarManager:isColliding(player_x,player_y,action)
 	for i = 0,self.totalCars do 
 		if self.cars[i] ~= nil then
 			local car = self.cars[i]
 			if (math.abs(player_x - car.x) < 100) and car.state ~= "flying" then
 				car:hit()
 			end
-
 		end
 	end
 end

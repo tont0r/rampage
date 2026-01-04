@@ -3,7 +3,7 @@ require "player"
 require "helicopter"
 require "carManager"
 require "rocket"
-
+require "railManager"
 function love.load()
     helicopter_arr = {}
     Object = require "classic"
@@ -13,13 +13,16 @@ function love.load()
 
     love.physics.setMeter(64) --the height of a meter our worlds will be 64px
     world = love.physics.newWorld(0, 9.81*64, true) 
-    local road = {}
-    road.body = love.physics.newBody(world, 5, 780 , "static")
+    world:setCallbacks(beginContact,nil,nil,nil)
+    road = {}
+    road.body = love.physics.newBody(world, 5, 800 , "static")
     road.shape = love.physics.newRectangleShape(5, 5, screen_width+10000, screen_height-5)
     road.fixture = love.physics.newFixture(road.body, road.shape, 1)  
     x=300
     y=450
     carManager = CarManager()
+    railManager = RailManager()
+
     player = Player(100,y-64)
     buildings = {}
     building1 = Building(x,y,5,3)
@@ -43,6 +46,16 @@ function love.load()
 
 end
 
+function beginContact(a, b)
+    if a:getBody():getUserData() == "rail" then
+        print(a:getBody():getUserData())
+        print(b:getBody():getUserData())
+        -- print(contact.type())
+    end
+    
+    
+end
+
 function love.draw()
     love.graphics.draw(background,0,0)
     for i = 0,buidling_count-1 do
@@ -51,8 +64,10 @@ function love.draw()
     end
     rocket:draw()
     player:draw()
+    railManager:draw()
     helicopter:draw()
     carManager:drawCars()
+    love.graphics.polygon("line", road.body:getWorldPoints(road.shape:getPoints()))
     
     
 end
@@ -130,9 +145,16 @@ function love.keyreleased(key)
         player:resetState()
     end
     if (key == "lshift") then
-        carManager:isColliding(player.x,player.y) 
+        carManager:isColliding(player.x,player.y,"hit") 
     end
-
+    if (key == "lgui") then
+        -- carManager:isColliding(player.x,player.y,"pickup") 
+        -- world:queryBoundingBox(player.x - 32, player.y - 32, player.x + 32, player.y + 32, function(fixture)
+        --     print(fixture)
+        --     return true
+        -- end)
+        player:jump()
+    end
 end
 
 

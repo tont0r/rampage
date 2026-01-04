@@ -1,5 +1,6 @@
 Object = require "classic"
 Building = Object:extend()
+local CAT_WINDOW = 0x0002
 
 function Building:new(x,y,floors,positions)
 	self.window_sheet = love.graphics.newImage("graphics/window-sheet.png")   
@@ -19,8 +20,9 @@ function Building:new(x,y,floors,positions)
 			local box = {}
 			local type = "dynamic"
 		    box.body = love.physics.newBody(world, self.x + (j * 64), self.y-(i * 64) , type)
-		    box.shape = love.physics.newRectangleShape(5, 5, 60, 60)
+		    box.shape = love.physics.newRectangleShape(32, 32, 59,59)
 		    box.fixture = love.physics.newFixture(box.body, box.shape, 1)    
+		    -- box.fixture:setFilterData(CAT_WINDOW, 0, 0)
 		    self.windows[i][j].box = box
 			self.windows[i][j].frame = 0
 		end
@@ -34,6 +36,7 @@ function Building:isColliding(x,player_y,direction)
 end
 
 function Building:draw()
+	-- building:drawColliders()
     for i = 0,self.floors do    
         for j = 0,self.positions do
         	local window = self.windows[i][j]        	    
@@ -75,7 +78,6 @@ function Building:hitWindow(x,y)
 	-- window_floor = math.ceil((self.y-y+64)/64)
 	local i, j, win = self:windowAtPoint(x, y)
 	  if win then
-	    print("hit window:", i, j)
     	if win.frame < 2 then
 			win.frame = win.frame + 1
 		end
@@ -84,13 +86,11 @@ function Building:hitWindow(x,y)
 			if player.direction == "left" then
 				direction = -200
 			end
-		
+			
 			win.box.body:applyLinearImpulse(direction,500)
-			print("i : "..i)
 			local floorDestroyed = true
 			for x = 0,self.positions do
 				local w = self.windows[i][x]
-				print(w.frame)
 				if (w.frame ~= 2) then
 					floorDestroyed = false
 				end
