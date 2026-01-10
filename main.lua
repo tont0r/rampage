@@ -13,11 +13,12 @@ function love.load()
 
     love.physics.setMeter(64) --the height of a meter our worlds will be 64px
     world = love.physics.newWorld(0, 9.81*64, true) 
-    world:setCallbacks(beginContact,nil,nil,nil)
+    world:setCallbacks(beginContact,endContact,preSolve,nil)
     road = {}
     road.body = love.physics.newBody(world, 5, 800 , "static")
     road.shape = love.physics.newRectangleShape(5, 5, screen_width+10000, screen_height-5)
-    road.fixture = love.physics.newFixture(road.body, road.shape, 1)  
+    road.fixture = love.physics.newFixture(road.body, road.shape, 0) 
+    road.body:setUserData("road") 
     x=300
     y=450
     carManager = CarManager()
@@ -45,16 +46,59 @@ function love.load()
     background:setFilter("nearest", "nearest")
 
 end
-
-function beginContact(a, b)
-    if a:getBody():getUserData() == "rail" then
-        print(a:getBody():getUserData())
-        print(b:getBody():getUserData())
-        -- print(contact.type())
-    end
-    
-    
+local function bodyTag(fix)
+  return fix:getBody():getUserData()
 end
+
+function preSolve(a, b, contact)
+  local tagA = a:getBody():getUserData()
+  local tagB = b:getBody():getUserData()
+
+  if not (
+    (tagA == "player" and tagB == "rail") or
+    (tagB == "player" and tagA == "rail")
+  ) then
+    return
+  end
+
+  -- Only allow collision once player is allowed to land
+  if player.platform_state ~= "landed" then
+    contact:setEnabled(false)
+  end
+end
+
+function endContact(a, b, contact)
+  local tagA = a:getBody():getUserData()
+  local tagB = b:getBody():getUserData()
+
+  if tagA == "player" and tagB == "rail" or
+     tagB == "player" and tagA == "rail" then
+
+    if player.platform_state == "below" then
+      player.platform_state = "exited"
+      print("EXITED PLATFORM (can now land)")
+    end
+  end
+end
+
+function beginContact(a, b, contact)
+  print("begin")
+  local tagA = a:getBody():getUserData()
+  local tagB = b:getBody():getUserData()
+
+  if tagA == "player" and tagB == "rail" or
+     tagB == "player" and tagA == "rail" then
+
+    if player.platform_state == "exited" then
+      player.platform_state = "landed"
+      print("LANDED ON PLATFORM")
+    else
+      print("TOUCH (ignored, rising)")
+    end
+  end
+end
+
+
 
 function love.draw()
     love.graphics.draw(background,0,0)

@@ -21,7 +21,8 @@ function Building:new(x,y,floors,positions)
 			local type = "dynamic"
 		    box.body = love.physics.newBody(world, self.x + (j * 64), self.y-(i * 64) , type)
 		    box.shape = love.physics.newRectangleShape(32, 32, 59,59)
-		    box.fixture = love.physics.newFixture(box.body, box.shape, 1)    
+		    box.fixture = love.physics.newFixture(box.body, box.shape, 1)  
+		    box.body:setUserData("building ".. i ..", " .. j)  
 		    -- box.fixture:setFilterData(CAT_WINDOW, 0, 0)
 		    self.windows[i][j].box = box
 			self.windows[i][j].frame = 0

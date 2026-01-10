@@ -7,6 +7,7 @@ function Player:new(x,y)
 	self.x = x
 	self.y = y
 	self.starting_y = y
+	self.platform_state = "below" -- below | exited | landed
 	self.state = 0 --standing. 1 is attacking
 	self.isClimbing = false
 	self.speed  =2
@@ -15,13 +16,16 @@ function Player:new(x,y)
 	self.player_x_offset = 0
 	self.isHolding = false
 	self.holding = nil
-	self.top = {}
-	self.top.body = love.physics.newBody(world, self.x,self.y , "static")
-    self.top.shape = love.physics.newRectangleShape(16, 32, 50, 25)
-    self.top.fixture = love.physics.newFixture(self.top.body, self.top.shape, 5)
-    self.top.fixture:setFilterData(0,0,0)    
+	self.feet = {}
+	self.feet.body = love.physics.newBody(world, self.x,self.y + 80 , "dynamic")
+    self.feet.shape = love.physics.newRectangleShape(16, 32, 32, 25)
+    self.feet.fixture = love.physics.newFixture(self.feet.body, self.feet.shape, 5)
+    -- self.feet.fixture:setFilterData(0,0,0)    
+    self.feet.body:setUserData("player")
+    self.feet.body:setGravityScale(0)
+    self.feet.fixture:setFriction(1)
     -- self.top.fixture:setSensor(true)
-    -- self.top.body:setGravityScale(0)
+    
     -- self.top.body:setUserData("player")
     
 end
@@ -62,13 +66,13 @@ function Player:move(direction,building)
 				self.isClimbing = false
 			end
 		end
-		self.top.body:setX(self.x)
-		self.top.body:setY(self.y)
+		self.feet.body:setX(self.x)
+		self.feet.body:setY(self.y)
 	end
 end
 
 function Player:draw()
-	love.graphics.polygon("line", self.top.body:getWorldPoints(self.top.shape:getPoints()))
+	love.graphics.polygon("line", self.feet.body:getWorldPoints(self.feet.shape:getPoints()))
 
 
 	quad = love.graphics.newQuad(32*self.state,0,32,64,64,64)
@@ -84,9 +88,9 @@ function Player:draw()
 end
 
 function Player:jump()
-	self.top.body:setGravityScale(1)
-	self.top.body:setType("dynamic")
-    self.top.body:applyLinearImpulse(300,-750)	
+	self.feet.body:setGravityScale(1)
+	self.feet.body:setType("dynamic")
+    self.feet.body:applyLinearImpulse(50,-550)	
 end
 
 

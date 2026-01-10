@@ -87,7 +87,7 @@ function Car:update(dt)
 		self.y = self.box.body:getY()
 		self.radians = self.radians + .1
 		-- this was checking the y value. id like to use isTouching
-		if (falling == 0) then
+		if (self.y >= 500) then
 			self.box.body:setType("static")
 			self.box.body:setMass(100)
 			self.state = "exploding"
