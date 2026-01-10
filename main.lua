@@ -50,54 +50,36 @@ local function bodyTag(fix)
   return fix:getBody():getUserData()
 end
 
-function preSolve(a, b, contact)
-  local tagA = a:getBody():getUserData()
-  local tagB = b:getBody():getUserData()
+function beginContact(a, b, contact)
+  local ua, ub = a:getUserData(), b:getUserData()
 
-  if not (
-    (tagA == "player" and tagB == "rail") or
-    (tagB == "player" and tagA == "rail")
-  ) then
-    return
-  end
-
-  -- Only allow collision once player is allowed to land
-  if player.platform_state ~= "landed" then
-    contact:setEnabled(false)
+  -- Feet touching rail?
+  if (ua == "player_feet" and ub == "rail") or (ub == "player_feet" and ua == "rail") then
+    print("b "..player.platform_state)
+    -- We only "land" after we've exited once (passed through from below)
+    if player.platform_state == "below" or player.platform_state == "jumped" then
+      player.platform_state = "entered"
+    end
+    if player.platform_state == "exited" then
+      player.platform_state = "landed"
+      print("LANDED")
+    else
+      print("FEET TOUCH (ignored; still below)")
+    end
   end
 end
 
 function endContact(a, b, contact)
-  local tagA = a:getBody():getUserData()
-  local tagB = b:getBody():getUserData()
-
-  if tagA == "player" and tagB == "rail" or
-     tagB == "player" and tagA == "rail" then
-
-    if player.platform_state == "below" then
-      player.platform_state = "exited"
-      print("EXITED PLATFORM (can now land)")
+  local ua, ub = a:getUserData(), b:getUserData()
+    print("e "..player.platform_state)
+  if (ua == "player_feet" and ub == "rail") or (ub == "player_feet" and ua == "rail") then
+    if player.platform_state == "entered" then
+        player.platform_state = "exited"
     end
+    -- player.feetTouchingRail = math.max(0, player.feetTouchingRail - 1)
+    -- print("feet touching rail:", player.feetTouchingRail)
   end
 end
-
-function beginContact(a, b, contact)
-  print("begin")
-  local tagA = a:getBody():getUserData()
-  local tagB = b:getBody():getUserData()
-
-  if tagA == "player" and tagB == "rail" or
-     tagB == "player" and tagA == "rail" then
-
-    if player.platform_state == "exited" then
-      player.platform_state = "landed"
-      print("LANDED ON PLATFORM")
-    else
-      print("TOUCH (ignored, rising)")
-    end
-  end
-end
-
 
 
 function love.draw()
