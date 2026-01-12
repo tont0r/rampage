@@ -1,6 +1,7 @@
 Object = require "classic"
 Building = Object:extend()
-local CAT_WINDOW = 0x0002
+
+
 
 function Building:new(x,y,floors,positions)
 	self.window_sheet = love.graphics.newImage("graphics/window-sheet.png")   
@@ -23,7 +24,7 @@ function Building:new(x,y,floors,positions)
 		    box.shape = love.physics.newRectangleShape(32, 32, 59,59)
 		    box.fixture = love.physics.newFixture(box.body, box.shape, 1)  
 		    box.body:setUserData("building ".. i ..", " .. j)  
-		    -- box.fixture:setFilterData(CAT_WINDOW, 0, 0)
+		    box.fixture:setFilterData(CAT_WINDOW, bit.bor(CAT_WINDOW,CAT_ROAD), 0)
 		    self.windows[i][j].box = box
 			self.windows[i][j].frame = 0
 		end

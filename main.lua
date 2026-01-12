@@ -4,6 +4,20 @@ require "helicopter"
 require "carManager"
 require "rocket"
 require "railManager"
+bit = require("bit")
+CAT_ROAD = 0x0001
+CAT_WINDOW = 0x0002
+CAT_RAIL = 0x0004
+CAT_FEET = 0x0008
+CAT_PLAYER = 0x0010
+
+local function dbgFixture(name, f)
+  if not f then print(name, "NIL"); return end
+  local cat, mask, group = f:getFilterData()
+  print(name, player.platform_state, f:isSensor())
+end
+
+
 function love.load()
     helicopter_arr = {}
     Object = require "classic"
@@ -16,8 +30,11 @@ function love.load()
     world:setCallbacks(beginContact,endContact,preSolve,nil)
     road = {}
     road.body = love.physics.newBody(world, 5, 800 , "static")
+
     road.shape = love.physics.newRectangleShape(5, 5, screen_width+10000, screen_height-5)
     road.fixture = love.physics.newFixture(road.body, road.shape, 0) 
+    road.fixture:setFilterData(CAT_ROAD,bit.bor(CAT_WINDOW,CAT_PLAYER),0)
+    road.fixture:setFriction(1)
     road.body:setUserData("road") 
     x=300
     y=450
@@ -99,6 +116,7 @@ function love.draw()
 end
 
 function love.update(dt)
+    dbgFixture("PLAYER_FEET", player.player.feetFixture)
     world:update(dt)
     carManager:updateCars(dt)
     player:update(dt)
@@ -134,6 +152,7 @@ function love.update(dt)
                 player:move("down",building_touching)
             end
         end
+        player:move("down",nil)
     end
 
     if love.keyboard.isDown("rshift") then
