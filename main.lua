@@ -4,6 +4,20 @@ require "helicopter"
 require "carManager"
 require "rocket"
 require "railManager"
+bit = require("bit")
+CAT_ROAD = 0x0001
+CAT_WINDOW = 0x0002
+CAT_RAIL = 0x0004
+CAT_FEET = 0x0008
+CAT_PLAYER = 0x0010
+
+local function dbgFixture(name, f)
+  if not f then print(name, "NIL"); return end
+  local cat, mask, group = f:getFilterData()
+  print(name, player.platform_state, f:isSensor())
+end
+
+
 function love.load()
     helicopter_arr = {}
     Object = require "classic"
@@ -13,11 +27,15 @@ function love.load()
 
     love.physics.setMeter(64) --the height of a meter our worlds will be 64px
     world = love.physics.newWorld(0, 9.81*64, true) 
-    world:setCallbacks(beginContact,nil,nil,nil)
+    world:setCallbacks(beginContact,endContact,preSolve,nil)
     road = {}
     road.body = love.physics.newBody(world, 5, 800 , "static")
+
     road.shape = love.physics.newRectangleShape(5, 5, screen_width+10000, screen_height-5)
-    road.fixture = love.physics.newFixture(road.body, road.shape, 1)  
+    road.fixture = love.physics.newFixture(road.body, road.shape, 0) 
+    road.fixture:setFilterData(CAT_ROAD,bit.bor(CAT_WINDOW,CAT_PLAYER),0)
+    road.fixture:setFriction(1)
+    road.body:setUserData("road") 
     x=300
     y=450
     carManager = CarManager()
@@ -45,19 +63,58 @@ function love.load()
     background:setFilter("nearest", "nearest")
 
 end
-
-function beginContact(a, b)
-    if a:getBody():getUserData() == "rail" then
-        print(a:getBody():getUserData())
-        print(b:getBody():getUserData())
-        -- print(contact.type())
-    end
-    
-    
+local function bodyTag(fix)
+  return fix:getBody():getUserData()
 end
+
+function beginContact(a, b, contact)
+  local ua, ub = a:getUserData(), b:getUserData()
+
+  -- Feet touching rail?
+  if (ua == "player_feet" and ub == "rail") or (ub == "player_feet" and ua == "rail") then
+    print("b "..player.platform_state)
+    -- We only "land" after we've exited once (passed through from below)
+    if player.platform_state == "below" or player.platform_state == "jumped" then
+      player.platform_state = "entered"
+    end
+    if player.platform_state == "exited" then
+      player.platform_state = "landed"
+      print("LANDED")
+    else
+      print("FEET TOUCH (ignored; still below)")
+    end
+  end
+end
+function preSolve(a, b, contact)
+    local ua, ub = a:getUserData(), b:getUserData()
+
+    if (ua == "player_feet" and ub == "rail") or (ub == "player_feet" and ua == "rail") then
+        -- Only disable if dropping or coming from below
+        if player.platform_state == "dropping" or player.platform_state == "below" then
+            contact:setEnabled(false)
+        end
+        -- Remove "jumped" from the disable list - let them jump off normally
+    end
+end
+
+function endContact(a, b, contact)
+  local ua, ub = a:getUserData(), b:getUserData()
+    print("e "..player.platform_state)
+  if (ua == "player_feet" and ub == "rail") or (ub == "player_feet" and ua == "rail") then
+    if player.platform_state == "entered" then
+        player.platform_state = "exited"
+    end
+    -- player.feetTouchingRail = math.max(0, player.feetTouchingRail - 1)
+    -- print("feet touching rail:", player.feetTouchingRail)
+  end
+end
+
 
 function love.draw()
     love.graphics.draw(background,0,0)
+    love.graphics.push()
+    love.graphics.translate(-player.player_x_offset, 0)
+    
     for i = 0,buidling_count-1 do
         building = buildings[i]
         building:draw()
@@ -68,11 +125,14 @@ function love.draw()
     helicopter:draw()
     carManager:drawCars()
     love.graphics.polygon("line", road.body:getWorldPoints(road.shape:getPoints()))
-    
+    love.graphics.pop()
     
 end
 
 function love.update(dt)
+    -- dbgFixture("PLAYER_FEET", player.player.feetFixture)
+    
+    
     world:update(dt)
     carManager:updateCars(dt)
     player:update(dt)
@@ -108,6 +168,7 @@ function love.update(dt)
                 player:move("down",building_touching)
             end
         end
+        player:move("down",nil)
     end
 
     if love.keyboard.isDown("rshift") then

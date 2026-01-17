@@ -1,6 +1,7 @@
 Object = require "classic"
 Building = Object:extend()
-local CAT_WINDOW = 0x0002
+
+
 
 function Building:new(x,y,floors,positions)
 	self.window_sheet = love.graphics.newImage("graphics/window-sheet.png")   
@@ -21,8 +22,9 @@ function Building:new(x,y,floors,positions)
 			local type = "dynamic"
 		    box.body = love.physics.newBody(world, self.x + (j * 64), self.y-(i * 64) , type)
 		    box.shape = love.physics.newRectangleShape(32, 32, 59,59)
-		    box.fixture = love.physics.newFixture(box.body, box.shape, 1)    
-		    -- box.fixture:setFilterData(CAT_WINDOW, 0, 0)
+		    box.fixture = love.physics.newFixture(box.body, box.shape, 1)  
+		    box.body:setUserData("building ".. i ..", " .. j)  
+		    box.fixture:setFilterData(CAT_WINDOW, bit.bor(CAT_WINDOW,CAT_ROAD), 0)
 		    self.windows[i][j].box = box
 			self.windows[i][j].frame = 0
 		end
@@ -42,7 +44,7 @@ function Building:draw()
         	local window = self.windows[i][j]        	    
             quad = love.graphics.newQuad(window.frame*32,0,32,32,96,32)
             if window.box.body:isDestroyed() == false then 
-            	love.graphics.draw(self.window_sheet, quad, window.box.body:getX() - player.player_x_offset, window.box.body:getY(),window.box.body:getAngle(),2)        
+            	love.graphics.draw(self.window_sheet, quad, window.box.body:getX(), window.box.body:getY(),window.box.body:getAngle(),2)        
             end
             
         end    
@@ -76,6 +78,7 @@ function Building:hitWindow(x,y)
 
 	-- window_position = math.floor((x-self.x)/64)
 	-- window_floor = math.ceil((self.y-y+64)/64)
+	print(x,y)
 	local i, j, win = self:windowAtPoint(x, y)
 	  if win then
     	if win.frame < 2 then

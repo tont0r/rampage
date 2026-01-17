@@ -6,7 +6,7 @@ function CarManager:new()
 	self.off_screen = love.graphics.getWidth() + 50
 	self.respawnTime = 1 --milliseconds?
 	self.timer = self.respawnTime
-	self.startCars = 0
+	self.startCars = 100 - 1
 	self.totalCars = 0
 	self.cars = {}
 	for i = 0,self.startCars do 

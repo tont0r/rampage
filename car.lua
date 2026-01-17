@@ -32,7 +32,7 @@ function Car:draw()
 	    if (self.direction == "left") then
 	    	d = 1
 	    end
-		love.graphics.draw(self.image, self.x -player.player_x_offset,self.y,self.radians,d,1, imageHalfWidth,imageHalfHeight)
+		love.graphics.draw(self.image, self.x,self.y,self.radians,d,1, imageHalfWidth,imageHalfHeight)
 	end
 	if (self.state == "exploding") then
 		if (self.framesUntilLoop <= 100) then
@@ -87,7 +87,7 @@ function Car:update(dt)
 		self.y = self.box.body:getY()
 		self.radians = self.radians + .1
 		-- this was checking the y value. id like to use isTouching
-		if (falling == 0) then
+		if (self.y >= 500) then
 			self.box.body:setType("static")
 			self.box.body:setMass(100)
 			self.state = "exploding"
