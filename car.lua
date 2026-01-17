@@ -32,7 +32,7 @@ function Car:draw()
 	    if (self.direction == "left") then
 	    	d = 1
 	    end
-		love.graphics.draw(self.image, self.x -player.player_x_offset,self.y,self.radians,d,1, imageHalfWidth,imageHalfHeight)
+		love.graphics.draw(self.image, self.x,self.y,self.radians,d,1, imageHalfWidth,imageHalfHeight)
 	end
 	if (self.state == "exploding") then
 		if (self.framesUntilLoop <= 100) then

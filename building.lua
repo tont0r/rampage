@@ -44,7 +44,7 @@ function Building:draw()
         	local window = self.windows[i][j]        	    
             quad = love.graphics.newQuad(window.frame*32,0,32,32,96,32)
             if window.box.body:isDestroyed() == false then 
-            	love.graphics.draw(self.window_sheet, quad, window.box.body:getX() - player.player_x_offset, window.box.body:getY(),window.box.body:getAngle(),2)        
+            	love.graphics.draw(self.window_sheet, quad, window.box.body:getX(), window.box.body:getY(),window.box.body:getAngle(),2)        
             end
             
         end    
@@ -78,6 +78,7 @@ function Building:hitWindow(x,y)
 
 	-- window_position = math.floor((x-self.x)/64)
 	-- window_floor = math.ceil((self.y-y+64)/64)
+	print(x,y)
 	local i, j, win = self:windowAtPoint(x, y)
 	  if win then
     	if win.frame < 2 then

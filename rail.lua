@@ -8,7 +8,7 @@ function Rail:new(x,y)
     self.y = y
     self.top = {}
     self.top.body = love.physics.newBody(world, self.x,self.y , "static")
-    self.top.shape = love.physics.newRectangleShape(0, 16, 256, 10)
+    self.top.shape = love.physics.newEdgeShape(0, 16, 256, 16)
     self.top.fixture = love.physics.newFixture(self.top.body, self.top.shape)    
     self.top.fixture:setFilterData(CAT_RAIL,CAT_FEET,0)
     self.top.body:setGravityScale(0)
@@ -22,6 +22,6 @@ function Rail:update()
 end
 
 function Rail:draw()
-	love.graphics.polygon("line", self.top.body:getWorldPoints(self.top.shape:getPoints()))
-	love.graphics.draw(self.rail, self.x - player.player_x_offset,self.y)
+	love.graphics.line(self.top.body:getWorldPoints(self.top.shape:getPoints()))
+	love.graphics.draw(self.rail, self.x ,self.y)
 end

@@ -53,8 +53,10 @@ local function drawFixtureAABB(fixture)
 end
 
 function Player:update(dt)
-	if self.x > 600 then
-		self.player_x_offset = self.x - 600
+	self.x = self.player.body:getX()
+	self.y = self.player.body:getY()
+	if self.player.body:getX() > 600 then
+		self.player_x_offset = self.player.body:getX() - 600
 		-- print(self.player_x_offset)
 	end
 	if (self.platform_state == "jumping" or self.platform_state == "entered" or self.platform_state == "exited" ) then
@@ -64,7 +66,7 @@ function Player:update(dt)
 	if self.platform_state == "landed" then
 		self.player.feetFixture:setSensor(false)
 	end
-	print(self.player.body:getLinearVelocity())
+	-- print(self.player.body:getLinearVelocity())
 	if self.platform_state == "dropping" and self.player.body:getLinearVelocity() == 0 then
 		self.platform_state = "below"
 	end
@@ -77,9 +79,11 @@ function Player:pickup(car)
 end
 
 function Player:move(direction,building)	
+
 	if (self.state == 0) then		
 		if (direction == "right") then
 			self.player.body:setLinearVelocity(100, 0)
+			-- print(self.state,direction,self.player.body:getLinearVelocity())
 		end
 		if (direction == "left") then
 			self.player.body:setLinearVelocity(-100, 0)
@@ -134,9 +138,10 @@ function Player:draw()
 end
 
 function Player:jump()
-	self.platform_state = "jumped"
-	-- self.player.body:setType("dynamic")
-    self.player.body:applyLinearImpulse(50,-400)	
+    if self.platform_state ~= "landed" then
+        self.platform_state = "jumped"
+    end
+    self.player.body:applyLinearImpulse(50,-400)
 end
 
 

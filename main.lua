@@ -85,6 +85,17 @@ function beginContact(a, b, contact)
     end
   end
 end
+function preSolve(a, b, contact)
+    local ua, ub = a:getUserData(), b:getUserData()
+
+    if (ua == "player_feet" and ub == "rail") or (ub == "player_feet" and ua == "rail") then
+        -- Only disable if dropping or coming from below
+        if player.platform_state == "dropping" or player.platform_state == "below" then
+            contact:setEnabled(false)
+        end
+        -- Remove "jumped" from the disable list - let them jump off normally
+    end
+end
 
 function endContact(a, b, contact)
   local ua, ub = a:getUserData(), b:getUserData()
@@ -101,6 +112,9 @@ end
 
 function love.draw()
     love.graphics.draw(background,0,0)
+    love.graphics.push()
+    love.graphics.translate(-player.player_x_offset, 0)
+    
     for i = 0,buidling_count-1 do
         building = buildings[i]
         building:draw()
@@ -111,12 +125,14 @@ function love.draw()
     helicopter:draw()
     carManager:drawCars()
     love.graphics.polygon("line", road.body:getWorldPoints(road.shape:getPoints()))
-    
+    love.graphics.pop()
     
 end
 
 function love.update(dt)
-    dbgFixture("PLAYER_FEET", player.player.feetFixture)
+    -- dbgFixture("PLAYER_FEET", player.player.feetFixture)
+    
+    
     world:update(dt)
     carManager:updateCars(dt)
     player:update(dt)
